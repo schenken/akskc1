@@ -29,9 +29,7 @@ public:
 	~CMusicData();
 
 	ScaleKeyChord GetScale (const std::wstring& key, MajorModes mode);
-
 	static const std::wstring& GetModeName (MajorModes mode);
-
 
 	// Public Class members.
 	static std::vector<std::wstring> chromaticScale;		// Basic 12-note scale.
@@ -45,4 +43,3 @@ protected:
 	static std::wstring romanNums[7];
 	static std::wstring romanNumsLower[7];
 };
-

@@ -145,4 +145,3 @@ std::vector<std::wstring> CMusicData::chromaticScaleSharps = { L"C", L"C#", L"D"
 
 std::wstring CMusicData::romanNums[7] = { L"I", L"II", L"III", L"IV", L"V", L"VI", L"VII" };
 std::wstring CMusicData::romanNumsLower[7] = { L"i", L"ii", L"iii", L"iv", L"v", L"vi", L"vii" };
-

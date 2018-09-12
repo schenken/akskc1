@@ -53,5 +53,4 @@ public:
 protected:
 	std::wstreambuf* coutbuf;
 	std::wofstream* out;
-
 };
