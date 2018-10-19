@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <chrono>
 
 std::vector<std::wstring> Split (const std::wstring& line, const std::wstring& dlim);
 
@@ -54,3 +55,4 @@ protected:
 	std::wstreambuf* coutbuf;
 	std::wofstream* out;
 };
+

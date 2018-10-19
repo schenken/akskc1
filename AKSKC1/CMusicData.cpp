@@ -1,15 +1,55 @@
 #include "pch.h"
 #include <algorithm>
 #include <cwctype>
+#include <mmsystem.h>
+#include <fstream>
+#include <chrono>
 #include "CMusicData.h"
 #include "Common.h"
 
-CMusicData::CMusicData()
+//-----------------------------------------------------------------------------
+
+UINT RunMetronome (LPVOID pParam)
 {
+	CMusicData* md = static_cast<CMusicData*>(pParam);
+
+	// Convert bpm to nanoseconds.
+	__int64 intervalNs = static_cast<__int64> (1000000 * (60000.0 / md->GetMetronomeBpm()));
+	std::chrono::nanoseconds ns (intervalNs);
+
+	unsigned int intervalSequenceIndex = 0;
+
+	do {
+		auto start = std::chrono::high_resolution_clock::now();		// Note the time.
+
+		md->wav1->Play();	// Plays asynchronously.
+			// NB. Using this simple API it's not possible to asynchronously play
+			// multiple sounds. (You'd really need to look into DirectX for that.)
+
+		// Pause until interval between beats elapses.
+		do {
+			auto now = std::chrono::high_resolution_clock::now();
+			auto elapsed = now - start;
+			if (elapsed > ns)
+				break;
+		} while (1);
+
+	} while (md->IsMetronomeRunning());
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+
+CMusicData::CMusicData() :
+runMetronome (false)
+{
+	wav1 = new WavClip (L"Kick.wav");
 }
 
 CMusicData::~CMusicData()
 {
+	delete wav1;
 }
 
 ScaleKeyChord CMusicData::GetScale (const std::wstring& key, MajorModes mode)
@@ -135,6 +175,35 @@ const std::wstring& CMusicData::GetModeName(MajorModes mode)
 }
 
 
+void CMusicData::SetMetronomeBpm(int _bpm)
+{
+	bpm = _bpm;
+}
+
+int CMusicData::GetMetronomeBpm() const
+{
+	return bpm;
+}
+
+void CMusicData::StartMetronome()
+{
+	if (!runMetronome)
+		AfxBeginThread (&RunMetronome, this, 0, 0);
+
+	runMetronome = true;
+}
+
+void CMusicData::StopMetronome()
+{
+	runMetronome = false;
+}
+
+bool CMusicData::IsMetronomeRunning() const
+{
+	return runMetronome;
+}
+
+
 // Initialise class members.
 int CMusicData::intervals[7] = { 2, 2, 1, 2, 2, 2, 1 };
 std::wstring CMusicData::modeNames[7] = { L"Ionian", L"Dorian", L"Phrygian", L"Lydian", L"Mixolydian", L"Aeolian", L"Locrian"};
@@ -145,3 +214,51 @@ std::vector<std::wstring> CMusicData::chromaticScaleSharps = { L"C", L"C#", L"D"
 
 std::wstring CMusicData::romanNums[7] = { L"I", L"II", L"III", L"IV", L"V", L"VI", L"VII" };
 std::wstring CMusicData::romanNumsLower[7] = { L"i", L"ii", L"iii", L"iv", L"v", L"vi", L"vii" };
+
+
+//-----------------------------------------------------------------------------
+
+WavClip::WavClip (const std::wstring& filename)
+{
+    ok = false;
+    buffer = 0;
+    hInstance = GetModuleHandle(0);
+
+    std::ifstream infile(filename, std::ios::binary);
+
+    if (!infile)
+    {
+		std::wcout << L"WavClip file error: " << filename << std::endl;
+        return;
+    }
+
+    infile.seekg (0, std::ios::end);	// get length of file
+    int length = static_cast<int> (infile.tellg());
+    buffer = new char[length];			// allocate memory
+    infile.seekg (0, std::ios::beg);	// position to start of file
+    infile.read (buffer,length);		// read entire file
+
+    infile.close();
+    ok = true;
+}
+
+//-----------------------------------------------------------------------------
+
+WavClip::~WavClip()
+{
+    PlaySound (NULL, 0, 0);		// Stop playing.
+    delete [] buffer;
+}
+
+void WavClip::Play()
+{
+    if (!ok)
+        return;
+	PlaySoundA (buffer, hInstance, SND_MEMORY | SND_ASYNC);
+}
+
+bool WavClip::IsOk()
+{
+    return ok;
+}
+

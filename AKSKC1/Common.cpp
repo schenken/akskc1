@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <chrono>
 #include "Common.h"
 
 std::vector<std::wstring> Split(const std::wstring& line, const std::wstring& dlim)
@@ -119,3 +120,4 @@ void CoutTarget::Reset()
 	if (out != nullptr)
 		delete out;
 }
+

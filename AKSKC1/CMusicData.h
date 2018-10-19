@@ -3,6 +3,14 @@
 #include <vector>
 #include <string>
 
+
+//-----------------------------------------------------------------------------
+
+UINT RunMetronome (LPVOID pParam);
+
+//-----------------------------------------------------------------------------
+class WavClip;
+
 enum class MajorModes { IONIAN, DORIAN, PHRYGIAN, LYDIAN, MIXOLYDIAN, AEOLIAN, LOCRIAN, NUL };
 
 struct ScaleKeyChord
@@ -28,8 +36,21 @@ public:
 	CMusicData();
 	~CMusicData();
 
+	struct MetronomeData
+	{
+		int bpm;
+	};
+
+	WavClip* wav1;
+
 	ScaleKeyChord GetScale (const std::wstring& key, MajorModes mode);
 	static const std::wstring& GetModeName (MajorModes mode);
+
+	void SetMetronomeBpm (int _bpm);
+	int GetMetronomeBpm() const;
+	void StartMetronome();
+	void StopMetronome();
+	bool IsMetronomeRunning() const;
 
 	// Public Class members.
 	static std::vector<std::wstring> chromaticScale;		// Basic 12-note scale.
@@ -38,8 +59,30 @@ public:
 
 protected:
 
+	bool runMetronome;
+	int bpm;
+
 	// Class members.
 	static int intervals[7];
 	static std::wstring romanNums[7];
 	static std::wstring romanNumsLower[7];
+
+};
+
+
+//-----------------------------------------------------------------------------
+
+class WavClip {
+
+public:
+    WavClip (const std::wstring& filename);
+    ~WavClip();
+
+    void Play();
+    bool IsOk();
+
+private:
+    char *buffer;
+    bool ok;
+    HINSTANCE hInstance;
 };
