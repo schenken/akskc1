@@ -4,6 +4,7 @@
 #include <mmsystem.h>
 #include <fstream>
 #include <chrono>
+#include <thread>
 #include "CMusicData.h"
 #include "Common.h"
 
@@ -17,14 +18,22 @@ UINT RunMetronome (LPVOID pParam)
 	__int64 intervalNs = static_cast<__int64> (1000000 * (60000.0 / md->GetMetronomeBpm()));
 	std::chrono::nanoseconds ns (intervalNs);
 
-	unsigned int intervalSequenceIndex = 0;
+	unsigned int beatCount = 0;
 
 	do {
 		auto start = std::chrono::high_resolution_clock::now();		// Note the time.
 
-		md->wav1->Play();	// Plays asynchronously.
-			// NB. Using this simple API it's not possible to asynchronously play
-			// multiple sounds. (You'd really need to look into DirectX for that.)
+		// Strictly 4/4 time.
+		if (beatCount == 2)
+			md->wav1->Play();
+		else
+			md->wav2->Play();
+		beatCount++;
+		if (beatCount > 3)
+			beatCount = 0;
+
+		// NB. Using this simple API it's not possible to asynchronously play
+		// multiple sounds. (You'd really need to look into DirectX for that.)
 
 		// Pause until interval between beats elapses.
 		do {
@@ -33,6 +42,10 @@ UINT RunMetronome (LPVOID pParam)
 			if (elapsed > ns)
 				break;
 		} while (1);
+
+		// This no good, as it may block for longer than sleep duration 
+		// due to scheduling or resource contention delays. 
+		//std::this_thread::sleep_for(ns);
 
 	} while (md->IsMetronomeRunning());
 
@@ -44,12 +57,12 @@ UINT RunMetronome (LPVOID pParam)
 CMusicData::CMusicData() :
 runMetronome (false)
 {
-	wav1 = new WavClip (L"Kick.wav");
+	wav1 = std::make_unique<WavClip> (L"Wood.wav");
+	wav2 = std::make_unique<WavClip> (L"Tamb.wav");
 }
 
 CMusicData::~CMusicData()
 {
-	delete wav1;
 }
 
 ScaleKeyChord CMusicData::GetScale (const std::wstring& key, MajorModes mode)

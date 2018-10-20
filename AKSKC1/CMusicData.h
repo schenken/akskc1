@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 
 //-----------------------------------------------------------------------------
@@ -41,7 +42,8 @@ public:
 		int bpm;
 	};
 
-	WavClip* wav1;
+	std::unique_ptr<WavClip> wav1;
+	std::unique_ptr<WavClip> wav2;
 
 	ScaleKeyChord GetScale (const std::wstring& key, MajorModes mode);
 	static const std::wstring& GetModeName (MajorModes mode);
